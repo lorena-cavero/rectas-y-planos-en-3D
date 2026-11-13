@@ -1,0 +1,2012 @@
+<!doctype html>
+<html lang="es"><head>
+    
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador 3D de Planos y Rectas — Matemática Universitaria</title>
+    <meta name="description" content="Simulador educativo interactivo para estudiantes universitarios de matemática: visualización tridimensional de planos en el espacio.">
+    <meta property="og:title" content="Simulador 3D de Planos y Rectas">
+    <meta property="og:description" content="Simulador educativo interactivo para estudiantes universitarios de matemática: visualización tridimensional de planos en el espacio.">
+    <meta property="og:type" content="website">
+    <style>
+      :root {
+        --bg-page: #f4f6f9;
+        --bg-surface: #ffffff;
+        --bg-subtle: #f8fafc;
+        --border-hairline: #dce3ec;
+        --border-strong: #cbd5e1;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --accent-primary: #1d4ed8;
+        --accent-primary-hover: #1e40af;
+        --accent-soft: #eff6ff;
+        --plane-a: #0369a1;
+        --plane-a-soft: #e0f2fe;
+        --plane-b: #c2410c;
+        --plane-b-soft: #ffedd5;
+        --intersect-color: #6d28d9;
+        --danger: #b91c1c;
+        --danger-bg: #fef2f2;
+        --danger-border: #fecaca;
+        --radius-lg: 14px;
+        --radius-md: 10px;
+        --radius-sm: 7px;
+        --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-page);
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      input {
+        font-family: inherit;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
+      }
+
+      /* Top Header */
+      .topbar {
+        background-color: var(--bg-surface);
+        border-bottom: 1px solid var(--border-hairline);
+        padding: 14px 24px;
+      }
+
+      .topbar-inner {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+
+      .brand-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        color: var(--text-primary);
+        white-space: nowrap;
+      }
+
+      .topbar-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .btn-download {
+        background-color: var(--bg-surface);
+        border-color: var(--border-strong);
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      .btn-download:hover {
+        background-color: var(--bg-subtle);
+        border-color: var(--text-muted);
+      }
+
+      .btn-download.is-downloaded {
+        background-color: var(--accent-soft);
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+        font-weight: 600;
+      }
+
+      /* Main Workspace */
+      .workspace {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px 24px 32px;
+        display: grid;
+        grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+      }
+
+      .panel {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-card);
+      }
+
+      /* Left Control Deck */
+      .controls-panel {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .section-header {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .section-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .section-subtitle {
+        margin: 0;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      /* Segmented Control */
+      .segmented {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        padding: 4px;
+        background-color: var(--bg-page);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-md);
+      }
+
+      .seg-btn {
+        appearance: none;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 9px 12px;
+        min-height: 40px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+          color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+          box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .seg-btn:hover {
+        color: var(--text-primary);
+      }
+
+      .seg-btn[aria-selected="true"],
+      .seg-btn.active {
+        background-color: var(--bg-surface);
+        color: var(--text-primary);
+        font-weight: 600;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      }
+
+      .divider {
+        height: 1px;
+        background-color: var(--border-hairline);
+        border: none;
+        margin: 0;
+      }
+
+      /* Plane Input Block */
+      .plane-block {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .plane-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .plane-label-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .color-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+
+      .swatch-a {
+        background-color: var(--plane-a);
+      }
+
+      .swatch-b {
+        background-color: var(--plane-b);
+      }
+
+      .plane-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .toggle-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        user-select: none;
+        min-height: 32px;
+      }
+
+      .toggle-check input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent-primary);
+        cursor: pointer;
+      }
+
+      .coeff-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .field label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+
+      .coeff-input {
+        width: 100%;
+        height: 40px;
+        padding: 6px 10px;
+        font-size: 14px;
+        font-variant-numeric: tabular-nums;
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        color: var(--text-primary);
+        background-color: var(--bg-subtle);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        text-align: center;
+        transition: border-color 150ms ease, background-color 150ms ease;
+      }
+
+      .coeff-input:focus {
+        background-color: var(--bg-surface);
+        border-color: var(--accent-primary);
+      }
+
+      .coeff-input.invalid {
+        border-color: var(--danger);
+        background-color: var(--danger-bg);
+      }
+
+      .equation-preview {
+        padding: 8px 12px;
+        background-color: var(--bg-subtle);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-sm);
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-primary);
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      .validation-msg {
+        padding: 10px 12px;
+        background-color: var(--danger-bg);
+        border: 1px solid var(--danger-border);
+        border-radius: var(--radius-sm);
+        color: var(--danger);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      /* Buttons */
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        appearance: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-strong);
+        background-color: var(--bg-surface);
+        color: var(--text-primary);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+      }
+
+      .btn:hover {
+        background-color: var(--bg-subtle);
+      }
+
+      .btn-primary {
+        background-color: var(--accent-primary);
+        border-color: var(--accent-primary);
+        color: #ffffff;
+        font-weight: 600;
+        flex: 1;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--accent-primary-hover);
+        border-color: var(--accent-primary-hover);
+      }
+
+      .btn-sm {
+        min-height: 36px;
+        padding: 6px 12px;
+        font-size: 12.5px;
+      }
+
+      .btn.is-active {
+        background-color: var(--accent-soft);
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+        font-weight: 600;
+      }
+
+      /* Preset grid */
+      .presets-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      /* Summary block */
+      .summary-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--border-hairline);
+      }
+
+      .summary-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      .summary-val {
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-primary);
+        font-weight: 500;
+        text-align: right;
+      }
+
+      /* Paused Lines Section */
+      .paused-box {
+        padding: 16px;
+        background-color: var(--bg-subtle);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-md);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .paused-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .paused-desc {
+        margin: 0;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      .paused-subtext {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+
+      /* Right Interactive 3D Stage */
+      .stage-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .stage-toolbar {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-hairline);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .canvas-wrap {
+        position: relative;
+        width: 100%;
+        height: 580px;
+        background-color: #ffffff;
+        transition: background-color 180ms ease;
+        user-select: none;
+        touch-action: none;
+      }
+
+      .canvas-wrap.hologram-bg {
+        background-color: #000000;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        cursor: grab;
+      }
+
+      canvas:active {
+        cursor: grabbing;
+      }
+
+      .stage-footer {
+        padding: 12px 16px;
+        border-top: 1px solid var(--border-hairline);
+        background-color: var(--bg-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 12.5px;
+        color: var(--text-secondary);
+      }
+
+      .legend-list {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      .legend-line {
+        width: 16px;
+        height: 2.5px;
+        border-radius: 2px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 980px) {
+        .workspace {
+          grid-template-columns: 1fr;
+          padding: 16px;
+        }
+
+        .canvas-wrap {
+          height: 440px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .topbar {
+          padding: 12px 16px;
+        }
+
+        .coeff-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .canvas-wrap {
+          height: 360px;
+        }
+      }
+    </style>
+  <style>.aistudio-hover-highlight { box-shadow: inset 0 0 0 0.5px white, inset 0 0 0 1.5px rgba(128,128,128,0.6) !important; }.aistudio-active-highlight { outline: 2px solid #87a9ff !important; outline-offset: -2px !important; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.3), inset 0 0 0 0.5px rgba(0,0,0,0.3) !important; }.aistudio-generating-blur { filter: blur(5px) grayscale(100%) brightness(28%) !important; transition: filter 0.3s ease; }#aistudio-focus-mode-tag { position: absolute; display: none; align-items: center; gap: 4px; background: #87a9ff; border-radius: 12px; z-index: 10000; padding: 8px; color: #32302c; font-family: Inter, sans-serif; font-size: 14px; font-style: normal; font-weight: 500; line-height: 21px; pointer-events: none; }#aistudio-hover-mode-tag { position: absolute; display: none; align-items: center; gap: 4px; background: rgba(128,128,128,0.6); border-radius: 12px; z-index: 10000; padding: 8px; color: white; font-family: Inter, sans-serif; font-size: 14px; font-style: normal; font-weight: 500; line-height: 21px; pointer-events: none; }.aistudio-img-icon { display: none; vertical-align: middle; pointer-events: auto; cursor: pointer; }.aistudio-img-icon.visible { display: inline-flex; }#aistudio-focus-mode-tag .aistudio-img-icon { position: relative; width: 26px; height: 26px; background: #32302c; border-radius: 6px; margin: -4px -4px -4px 0; }#aistudio-focus-mode-tag .aistudio-img-icon::before { content: ""; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; background-color: white; -webkit-mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); mask-size: contain; mask-repeat: no-repeat; }#aistudio-hover-mode-tag .aistudio-img-icon { position: relative; width: 18px; height: 18px; margin-left: 4px; }#aistudio-hover-mode-tag .aistudio-img-icon::before { content: ""; position: absolute; top: 0; left: 0; width: 18px; height: 18px; background-color: white; -webkit-mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); mask-size: contain; mask-repeat: no-repeat; }#aistudio-focus-mode-tag .aistudio-img-icon:hover, #aistudio-hover-mode-tag .aistudio-img-icon:hover { background: #424242 !important; }#aistudio-focus-mode-tag .aistudio-img-icon:active, #aistudio-hover-mode-tag .aistudio-img-icon:active { background: #393f51 !important; }</style></head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <h1 class="brand-title">Simulador 3D de Geometría Analítica</h1>
+        <div class="topbar-meta">
+          <span>Ecuación general en el espacio tridimensional</span>
+          <span aria-hidden="true">·</span>
+          <span>Ejes x, y, z</span>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" id="download-app-btn" class="btn btn-sm btn-download" title="Descargar una copia HTML autocontenida para usar sin conexión">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span id="download-app-label">Descargar simulador</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <!-- Panel de controles -->
+      <section class="panel controls-panel" aria-label="Configuración geométrica">
+        <div class="section-header">
+          <h2 class="section-title">Tipo de objeto en el espacio</h2>
+          <p class="section-subtitle">Seleccioná si deseás construir rectas o planos en ℝ³.</p>
+        </div>
+
+        <div class="segmented" role="tablist" aria-label="Selector entre rectas y planos">
+          <button type="button" id="mode-planes-btn" class="seg-btn active" role="tab" aria-selected="true">
+            Planos en el espacio
+          </button>
+          <button type="button" id="mode-lines-btn" class="seg-btn" role="tab" aria-selected="false">
+            Rectas en el espacio
+          </button>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Sección Pausada: Rectas en el espacio -->
+        <div id="lines-section" class="hidden" aria-live="polite">
+          <div class="plane-block">
+            <div class="section-header">
+              <h3 class="section-title">Tipo de expresión de la recta</h3>
+              <p class="section-subtitle">Elegí el formato algebraico que deseás introducir.</p>
+            </div>
+
+            <div class="segmented" role="tablist" aria-label="Tipo de expresión para rectas">
+              <button type="button" id="line-param-btn" class="seg-btn active" role="tab" aria-selected="true">
+                Paramétrica
+              </button>
+              <button type="button" id="line-sym-btn" class="seg-btn" role="tab" aria-selected="false">
+                Simétrica
+              </button>
+            </div>
+
+            <div class="paused-box">
+              <h4 class="paused-title">Sección en pausa</h4>
+              <p class="paused-desc">
+                La construcción de rectas en el espacio (<span id="line-type-label">expresión paramétrica</span>) se encuentra pausada por el momento.
+              </p>
+              <p class="paused-subtext">
+                Podés volver a «Planos en el espacio» para ingresar los coeficientes de los planos A y B y visualizarlos en el gráfico 3D.
+              </p>
+              <div>
+                <button type="button" id="back-to-planes-btn" class="btn btn-primary" style="width: 100%;">
+                  Volver a Planos en el espacio
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección Activa: Planos en el espacio -->
+        <div id="planes-section" class="plane-block" style="gap: 18px;">
+          <form id="planes-form" novalidate="" style="display: flex; flex-direction: column; gap: 18px;">
+            <!-- Plano A -->
+            <div class="plane-block">
+              <div class="plane-header">
+                <div class="plane-label-group">
+                  <span class="color-swatch swatch-a" aria-hidden="true"></span>
+                  <span class="plane-name">Plano A</span>
+                </div>
+                <label class="toggle-check">
+                  <input type="checkbox" id="show-a" checked="">
+                  <span>Mostrar</span>
+                </label>
+              </div>
+
+              <div class="coeff-grid">
+                <div class="field">
+                  <label for="ax">Coef. x<sub>A</sub></label>
+                  <input id="ax" class="coeff-input" type="text" inputmode="decimal" value="1" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="ay">Coef. y<sub>A</sub></label>
+                  <input id="ay" class="coeff-input" type="text" inputmode="decimal" value="1" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="az">Coef. z<sub>A</sub></label>
+                  <input id="az" class="coeff-input" type="text" inputmode="decimal" value="1" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="ad">Indep. A</label>
+                  <input id="ad" class="coeff-input" type="text" inputmode="decimal" value="-2" autocomplete="off">
+                </div>
+              </div>
+
+              <div id="eq-a-preview" class="equation-preview" aria-live="polite">1·x + 1·y + 1·z - 2 = 0</div>
+              <div id="err-a" class="validation-msg hidden" role="alert"></div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Plano B -->
+            <div class="plane-block">
+              <div class="plane-header">
+                <div class="plane-label-group">
+                  <span class="color-swatch swatch-b" aria-hidden="true"></span>
+                  <span class="plane-name">Plano B</span>
+                </div>
+                <label class="toggle-check">
+                  <input type="checkbox" id="show-b" checked="">
+                  <span>Mostrar</span>
+                </label>
+              </div>
+
+              <div class="coeff-grid">
+                <div class="field">
+                  <label for="bx">Coef. x<sub>B</sub></label>
+                  <input id="bx" class="coeff-input" type="text" inputmode="decimal" value="1" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="by">Coef. y<sub>B</sub></label>
+                  <input id="by" class="coeff-input" type="text" inputmode="decimal" value="-1" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="bz">Coef. z<sub>B</sub></label>
+                  <input id="bz" class="coeff-input" type="text" inputmode="decimal" value="1" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="bd">Indep. B</label>
+                  <input id="bd" class="coeff-input" type="text" inputmode="decimal" value="0" autocomplete="off">
+                </div>
+              </div>
+
+              <div id="eq-b-preview" class="equation-preview" aria-live="polite">1·x - 1·y + 1·z + 0 = 0</div>
+              <div id="err-b" class="validation-msg hidden" role="alert"></div>
+            </div>
+
+            <div class="btn-row">
+              <button type="submit" class="btn btn-primary">Graficar planos A y B</button>
+            </div>
+          </form>
+
+          <hr class="divider">
+
+          <!-- Ejemplos didácticos -->
+          <div class="plane-block">
+            <h3 class="section-title" style="font-size: 13.5px;">Ejemplos para explorar</h3>
+            <div class="presets-grid">
+              <button type="button" class="btn btn-sm" data-preset="secantes">Planos secantes</button>
+              <button type="button" class="btn btn-sm" data-preset="paralelos">Planos paralelos</button>
+              <button type="button" class="btn btn-sm" data-preset="perpendiculares">Perpendiculares</button>
+              <button type="button" class="btn btn-sm" data-preset="coincidentes">Coincidentes</button>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <!-- Análisis geométrico -->
+          <div class="plane-block">
+            <h3 class="section-title" style="font-size: 13.5px;">Lectura geométrica</h3>
+            <div class="summary-list" aria-live="polite">
+              <div class="summary-item">
+                <span>Normal A</span>
+                <span id="norm-a-val" class="summary-val">(1, 1, 1)</span>
+              </div>
+              <div class="summary-item">
+                <span>Normal B</span>
+                <span id="norm-b-val" class="summary-val">(1, -1, 1)</span>
+              </div>
+              <div class="summary-item">
+                <span>Posición relativa</span>
+                <span id="rel-pos-val" class="summary-val">Secantes</span>
+              </div>
+              <div class="summary-item">
+                <span>Ángulo entre planos</span>
+                <span id="angle-val" class="summary-val">70.5°</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Escenario 3D interactivo -->
+      <section class="panel stage-panel" aria-label="Gráfico tridimensional de líneas">
+        <div class="stage-toolbar">
+          <div class="toolbar-group">
+            <button type="button" id="anim-toggle-btn" class="btn btn-sm is-active">Pausar giro</button>
+            <button type="button" id="reset-view-btn" class="btn btn-sm">
+              Centrar vista
+            </button>
+            <button type="button" id="fill-toggle-btn" class="btn btn-sm is-active">
+              Superficie suave
+            </button>
+            <button type="button" id="normals-toggle-btn" class="btn btn-sm">
+              Vectores normales
+            </button>
+          </div>
+
+          <div class="toolbar-group">
+            <button type="button" id="view-standard-btn" class="btn btn-sm is-active">
+              Gráfico claro
+            </button>
+            <button type="button" id="view-hologram-btn" class="btn btn-sm">
+              Holograma caja 3D
+            </button>
+            <button type="button" id="view-pyramid-btn" class="btn btn-sm">
+              Pirámide 4 caras
+            </button>
+          </div>
+        </div>
+
+        <div id="canvas-wrap" class="canvas-wrap">
+          <canvas id="scene-canvas" aria-label="Gráfico tridimensional con ejes x, y, z mostrando el plano A y el plano B"></canvas>
+          <div id="out-of-bounds-note" class="hidden" style="position: absolute; left: 14px; bottom: 14px; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; background: rgba(255, 255, 255, 0.92); color: #0f172a; border: 1px solid #cbd5e1; pointer-events: none;"></div>
+        </div>
+
+        <div class="stage-footer">
+          <div class="legend-list">
+            <span class="legend-item">
+              <span class="legend-line" style="background-color: #0369a1;"></span>
+              <span>Plano A</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-line" style="background-color: #c2410c;"></span>
+              <span>Plano B</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-line" style="background-color: #6d28d9;"></span>
+              <span>Recta intersección (A ∩ B)</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-line" style="background-color: #b91c1c;"></span>
+              <span>Eje x</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-line" style="background-color: #15803d;"></span>
+              <span>Eje y</span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-line" style="background-color: #1d4ed8;"></span>
+              <span>Eje z</span>
+            </span>
+          </div>
+          <span>Arrastrá para girar · Rueda para acercar o alejar</span>
+        </div>
+      </section>
+    </main>
+
+    <script id="simulator-script">
+      (function () {
+        "use strict";
+
+        // Referencias DOM
+        const modePlanesBtn = document.getElementById("mode-planes-btn");
+        const modeLinesBtn = document.getElementById("mode-lines-btn");
+        const planesSection = document.getElementById("planes-section");
+        const linesSection = document.getElementById("lines-section");
+        const backToPlanesBtn = document.getElementById("back-to-planes-btn");
+
+        const lineParamBtn = document.getElementById("line-param-btn");
+        const lineSymBtn = document.getElementById("line-sym-btn");
+        const lineTypeLabel = document.getElementById("line-type-label");
+
+        const planesForm = document.getElementById("planes-form");
+        const inputsA = {
+          a: document.getElementById("ax"),
+          b: document.getElementById("ay"),
+          c: document.getElementById("az"),
+          d: document.getElementById("ad"),
+        };
+        const inputsB = {
+          a: document.getElementById("bx"),
+          b: document.getElementById("by"),
+          c: document.getElementById("bz"),
+          d: document.getElementById("bd"),
+        };
+        const showACheck = document.getElementById("show-a");
+        const showBCheck = document.getElementById("show-b");
+
+        const eqAPreview = document.getElementById("eq-a-preview");
+        const eqBPreview = document.getElementById("eq-b-preview");
+        const errABox = document.getElementById("err-a");
+        const errBBox = document.getElementById("err-b");
+
+        const normAVal = document.getElementById("norm-a-val");
+        const normBVal = document.getElementById("norm-b-val");
+        const relPosVal = document.getElementById("rel-pos-val");
+        const angleVal = document.getElementById("angle-val");
+
+        const animToggleBtn = document.getElementById("anim-toggle-btn");
+        const resetViewBtn = document.getElementById("reset-view-btn");
+        const fillToggleBtn = document.getElementById("fill-toggle-btn");
+        const normalsToggleBtn = document.getElementById("normals-toggle-btn");
+
+        const viewStandardBtn = document.getElementById("view-standard-btn");
+        const viewHologramBtn = document.getElementById("view-hologram-btn");
+        const viewPyramidBtn = document.getElementById("view-pyramid-btn");
+
+        const canvasWrap = document.getElementById("canvas-wrap");
+        const canvas = document.getElementById("scene-canvas");
+        const outOfBoundsNote = document.getElementById("out-of-bounds-note");
+        const ctx = canvas.getContext("2d");
+
+        const downloadAppBtn = document.getElementById("download-app-btn");
+        const downloadAppLabel = document.getElementById("download-app-label");
+
+        // Estado de la aplicación
+        const BOX_RADIUS = 5;
+        const prefersReducedMotion =
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        const state = {
+          planeA: { a: 1, b: 1, c: 1, d: -2, valid: true, visible: true },
+          planeB: { a: 1, b: -1, c: 1, d: 0, valid: true, visible: true },
+          yaw: -0.62,
+          pitch: 0.42,
+          zoom: 1.0,
+          autoRotate: !prefersReducedMotion,
+          showFill: true,
+          showNormals: false,
+          renderMode: "standard", // "standard" | "hologram" | "pyramid"
+          dragging: false,
+          lastX: 0,
+          lastY: 0,
+        };
+
+        // Ejemplos predefinidos
+        const PRESETS = {
+          secantes: {
+            A: [1, 1, 1, -2],
+            B: [1, -1, 1, 0],
+          },
+          paralelos: {
+            A: [1, 1, 1, -2],
+            B: [1, 1, 1, 2],
+          },
+          perpendiculares: {
+            A: [1, 0, 0, -1],
+            B: [0, 1, 0, -1],
+          },
+          coincidentes: {
+            A: [1, 2, -1, -2],
+            B: [2, 4, -2, -4],
+          },
+        };
+
+        // Utilidades numéricas y vectoriales
+        function parseCoeff(raw) {
+          const cleaned = String(raw).trim().replace(",", ".");
+          if (cleaned === "" || cleaned === "-" || cleaned === "+" || cleaned === ".") {
+            return NaN;
+          }
+          const num = Number(cleaned);
+          return Number.isFinite(num) ? num : NaN;
+        }
+
+        function formatNum(n) {
+          if (Math.abs(n) < 1e-9) return "0";
+          const rounded = Math.round(n * 1000) / 1000;
+          return String(rounded);
+        }
+
+        function formatEquation(a, b, c, d) {
+          function signedTerm(coef, variable, isFirst) {
+            const absStr = formatNum(Math.abs(coef));
+            const sign = coef < 0 ? "-" : "+";
+            if (isFirst) {
+              return (coef < 0 ? "-" : "") + absStr + "·" + variable;
+            }
+            return " " + sign + " " + absStr + "·" + variable;
+          }
+          const dSign = d < 0 ? "-" : "+";
+          const dStr = formatNum(Math.abs(d));
+          return (
+            signedTerm(a, "x", true) +
+            signedTerm(b, "y", false) +
+            signedTerm(c, "z", false) +
+            " " +
+            dSign +
+            " " +
+            dStr +
+            " = 0"
+          );
+        }
+
+        function dot(u, v) {
+          return u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+        }
+
+        function cross(u, v) {
+          return [
+            u[1] * v[2] - u[2] * v[1],
+            u[2] * v[0] - u[0] * v[2],
+            u[0] * v[1] - u[1] * v[0],
+          ];
+        }
+
+        function norm(v) {
+          return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+        }
+
+        function normalize(v) {
+          const len = norm(v);
+          if (len < 1e-12) return [0, 0, 0];
+          return [v[0] / len, v[1] / len, v[2] / len];
+        }
+
+        function sub(u, v) {
+          return [u[0] - v[0], u[1] - v[1], u[2] - v[2]];
+        }
+
+        function add(u, v) {
+          return [u[0] + v[0], u[1] + v[1], u[2] + v[2]];
+        }
+
+        function scaleVec(v, s) {
+          return [v[0] * s, v[1] * s, v[2] * s];
+        }
+
+        // Validación y lectura de inputs
+        function readPlaneInputs(inputsObj, errBox, previewEl, label) {
+          const rawA = inputsObj.a.value;
+          const rawB = inputsObj.b.value;
+          const rawC = inputsObj.c.value;
+          const rawD = inputsObj.d.value;
+
+          const a = parseCoeff(rawA);
+          const b = parseCoeff(rawB);
+          const c = parseCoeff(rawC);
+          const d = parseCoeff(rawD);
+
+          inputsObj.a.classList.toggle("invalid", Number.isNaN(a));
+          inputsObj.b.classList.toggle("invalid", Number.isNaN(b));
+          inputsObj.c.classList.toggle("invalid", Number.isNaN(c));
+          inputsObj.d.classList.toggle("invalid", Number.isNaN(d));
+
+          if (
+            Number.isNaN(a) ||
+            Number.isNaN(b) ||
+            Number.isNaN(c) ||
+            Number.isNaN(d)
+          ) {
+            errBox.textContent =
+              "Ingresá valores numéricos válidos en los cuatro coeficientes del " +
+              label +
+              ".";
+            errBox.classList.remove("hidden");
+            previewEl.textContent =
+              (rawA || "?") +
+              "·x + " +
+              (rawB || "?") +
+              "·y + " +
+              (rawC || "?") +
+              "·z + " +
+              (rawD || "?") +
+              " = 0";
+            return { a: 0, b: 0, c: 0, d: 0, valid: false };
+          }
+
+          previewEl.textContent = formatEquation(a, b, c, d);
+
+          if (Math.abs(a) < 1e-9 && Math.abs(b) < 1e-9 && Math.abs(c) < 1e-9) {
+            errBox.textContent =
+              "En el " +
+              label +
+              ", los coeficientes de x, y, z no pueden ser todos cero simultáneamente.";
+            errBox.classList.remove("hidden");
+            return { a, b, c, d, valid: false };
+          }
+
+          errBox.classList.add("hidden");
+          errBox.textContent = "";
+          return { a, b, c, d, valid: true };
+        }
+
+        function updateGeometryAnalysis() {
+          const pA = state.planeA;
+          const pB = state.planeB;
+
+          normAVal.textContent = pA.valid
+            ? "(" + formatNum(pA.a) + ", " + formatNum(pA.b) + ", " + formatNum(pA.c) + ")"
+            : "No definido";
+          normBVal.textContent = pB.valid
+            ? "(" + formatNum(pB.a) + ", " + formatNum(pB.b) + ", " + formatNum(pB.c) + ")"
+            : "No definido";
+
+          if (!pA.valid || !pB.valid) {
+            relPosVal.textContent = "Revisar coeficientes";
+            angleVal.textContent = "—";
+            return;
+          }
+
+          const nA = [pA.a, pA.b, pA.c];
+          const nB = [pB.a, pB.b, pB.c];
+          const cr = cross(nA, nB);
+          const crLen = norm(cr);
+          const lenA = norm(nA);
+          const lenB = norm(nB);
+
+          if (crLen < 1e-7 * lenA * lenB) {
+            // Vectores normales proporcionales: nB = k * nA
+            let k = 0;
+            if (Math.abs(pA.a) >= Math.abs(pA.b) && Math.abs(pA.a) >= Math.abs(pA.c)) {
+              k = pB.a / pA.a;
+            } else if (Math.abs(pA.b) >= Math.abs(pA.c)) {
+              k = pB.b / pA.b;
+            } else {
+              k = pB.c / pA.c;
+            }
+            const dDiff = Math.abs(pB.d - k * pA.d);
+            if (dDiff < 1e-6 * (1 + Math.abs(pB.d))) {
+              relPosVal.textContent = "Coincidentes";
+              angleVal.textContent = "0°";
+            } else {
+              relPosVal.textContent = "Paralelos distintos";
+              angleVal.textContent = "0°";
+            }
+          } else {
+            const cosTheta = Math.min(
+              1,
+              Math.max(0, Math.abs(dot(nA, nB)) / (lenA * lenB))
+            );
+            const deg = (Math.acos(cosTheta) * 180) / Math.PI;
+            if (Math.abs(dot(nA, nB)) < 1e-7 * lenA * lenB) {
+              relPosVal.textContent = "Secantes perpendiculares";
+            } else {
+              relPosVal.textContent = "Secantes";
+            }
+            angleVal.textContent = (Math.round(deg * 10) / 10) + "°";
+          }
+        }
+
+        function syncPlanesFromInputs() {
+          const resA = readPlaneInputs(inputsA, errABox, eqAPreview, "Plano A");
+          const resB = readPlaneInputs(inputsB, errBBox, eqBPreview, "Plano B");
+          state.planeA = { ...resA, visible: showACheck.checked };
+          state.planeB = { ...resB, visible: showBCheck.checked };
+          updateGeometryAnalysis();
+          renderScene();
+        }
+
+        // Eventos de selector Rectas / Planos
+        function setObjectMode(mode) {
+          const isPlanes = mode === "planes";
+          modePlanesBtn.classList.toggle("active", isPlanes);
+          modePlanesBtn.setAttribute("aria-selected", String(isPlanes));
+          modeLinesBtn.classList.toggle("active", !isPlanes);
+          modeLinesBtn.setAttribute("aria-selected", String(!isPlanes));
+          planesSection.classList.toggle("hidden", !isPlanes);
+          linesSection.classList.toggle("hidden", isPlanes);
+        }
+
+        modePlanesBtn.addEventListener("click", () => setObjectMode("planes"));
+        modeLinesBtn.addEventListener("click", () => setObjectMode("lines"));
+        backToPlanesBtn.addEventListener("click", () => setObjectMode("planes"));
+
+        lineParamBtn.addEventListener("click", () => {
+          lineParamBtn.classList.add("active");
+          lineParamBtn.setAttribute("aria-selected", "true");
+          lineSymBtn.classList.remove("active");
+          lineSymBtn.setAttribute("aria-selected", "false");
+          lineTypeLabel.textContent = "expresión paramétrica";
+        });
+
+        lineSymBtn.addEventListener("click", () => {
+          lineSymBtn.classList.add("active");
+          lineSymBtn.setAttribute("aria-selected", "true");
+          lineParamBtn.classList.remove("active");
+          lineParamBtn.setAttribute("aria-selected", "false");
+          lineTypeLabel.textContent = "expresión simétrica";
+        });
+
+        // Eventos de formulario y campos
+        [inputsA, inputsB].forEach((group) => {
+          Object.values(group).forEach((el) => {
+            el.addEventListener("input", syncPlanesFromInputs);
+          });
+        });
+        showACheck.addEventListener("change", syncPlanesFromInputs);
+        showBCheck.addEventListener("change", syncPlanesFromInputs);
+
+        planesForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          syncPlanesFromInputs();
+        });
+
+        // Botones de presets
+        document.querySelectorAll("[data-preset]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const key = btn.getAttribute("data-preset");
+            const preset = PRESETS[key];
+            if (!preset) return;
+            inputsA.a.value = preset.A[0];
+            inputsA.b.value = preset.A[1];
+            inputsA.c.value = preset.A[2];
+            inputsA.d.value = preset.A[3];
+            inputsB.a.value = preset.B[0];
+            inputsB.b.value = preset.B[1];
+            inputsB.c.value = preset.B[2];
+            inputsB.d.value = preset.B[3];
+            showACheck.checked = true;
+            showBCheck.checked = true;
+            syncPlanesFromInputs();
+          });
+        });
+
+        // Toolbar del escenario 3D
+        function updateAnimButton() {
+          animToggleBtn.textContent = state.autoRotate ? "Pausar giro" : "Reanudar giro";
+          animToggleBtn.classList.toggle("is-active", state.autoRotate);
+        }
+
+        animToggleBtn.addEventListener("click", () => {
+          state.autoRotate = !state.autoRotate;
+          updateAnimButton();
+        });
+
+        resetViewBtn.addEventListener("click", () => {
+          state.yaw = -0.62;
+          state.pitch = 0.42;
+          state.zoom = 1.0;
+          renderScene();
+        });
+
+        fillToggleBtn.addEventListener("click", () => {
+          state.showFill = !state.showFill;
+          fillToggleBtn.classList.toggle("is-active", state.showFill);
+          renderScene();
+        });
+
+        normalsToggleBtn.addEventListener("click", () => {
+          state.showNormals = !state.showNormals;
+          normalsToggleBtn.classList.toggle("is-active", state.showNormals);
+          renderScene();
+        });
+
+        function setRenderMode(mode) {
+          state.renderMode = mode;
+          const isDark = mode === "hologram" || mode === "pyramid";
+          canvasWrap.classList.toggle("hologram-bg", isDark);
+          viewStandardBtn.classList.toggle("is-active", mode === "standard");
+          viewHologramBtn.classList.toggle("is-active", mode === "hologram");
+          viewPyramidBtn.classList.toggle("is-active", mode === "pyramid");
+          renderScene();
+        }
+
+        viewStandardBtn.addEventListener("click", () => setRenderMode("standard"));
+        viewHologramBtn.addEventListener("click", () => setRenderMode("hologram"));
+        viewPyramidBtn.addEventListener("click", () => setRenderMode("pyramid"));
+
+        // Interacción mouse / táctil para rotar y zoom
+        canvas.addEventListener("pointerdown", (e) => {
+          state.dragging = true;
+          state.lastX = e.clientX;
+          state.lastY = e.clientY;
+          canvas.setPointerCapture(e.pointerId);
+        });
+
+        canvas.addEventListener("pointermove", (e) => {
+          if (!state.dragging) return;
+          const dx = e.clientX - state.lastX;
+          const dy = e.clientY - state.lastY;
+          state.lastX = e.clientX;
+          state.lastY = e.clientY;
+          state.yaw += dx * 0.0075;
+          state.pitch = Math.max(-1.42, Math.min(1.42, state.pitch + dy * 0.0075));
+          renderScene();
+        });
+
+        canvas.addEventListener("pointerup", (e) => {
+          state.dragging = false;
+          if (canvas.hasPointerCapture(e.pointerId)) {
+            canvas.releasePointerCapture(e.pointerId);
+          }
+        });
+
+        canvas.addEventListener("pointercancel", () => {
+          state.dragging = false;
+        });
+
+        canvas.addEventListener(
+          "wheel",
+          (e) => {
+            e.preventDefault();
+            const factor = e.deltaY > 0 ? 0.92 : 1.08;
+            state.zoom = Math.max(0.55, Math.min(2.2, state.zoom * factor));
+            renderScene();
+          },
+          { passive: false }
+        );
+
+        // Matemática exacta de intersección plano - cubo [-R, R]^3
+        const R = BOX_RADIUS;
+        const CUBE_VERTS = [
+          [-R, -R, -R],
+          [R, -R, -R],
+          [R, R, -R],
+          [-R, R, -R],
+          [-R, -R, R],
+          [R, -R, R],
+          [R, R, R],
+          [-R, R, R],
+        ];
+        const CUBE_EDGES = [
+          [0, 1], [1, 2], [2, 3], [3, 0],
+          [4, 5], [5, 6], [6, 7], [7, 4],
+          [0, 4], [1, 5], [2, 6], [3, 7],
+        ];
+
+        function planeBasis(nRaw) {
+          const n = normalize(nRaw);
+          const ref = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+          const u = normalize(cross(ref, n));
+          const v = cross(n, u);
+          return { n, u, v };
+        }
+
+        function intersectPlaneWithBox(a, b, c, d) {
+          const pts = [];
+          const eps = 1e-8;
+          for (let i = 0; i < CUBE_EDGES.length; i++) {
+            const p1 = CUBE_VERTS[CUBE_EDGES[i][0]];
+            const p2 = CUBE_VERTS[CUBE_EDGES[i][1]];
+            const f1 = a * p1[0] + b * p1[1] + c * p1[2] + d;
+            const f2 = a * p2[0] + b * p2[1] + c * p2[2] + d;
+
+            if (Math.abs(f1) < eps && Math.abs(f2) < eps) {
+              pts.push(p1, p2);
+            } else if (Math.abs(f1) < eps) {
+              pts.push(p1);
+            } else if (Math.abs(f2) < eps) {
+              pts.push(p2);
+            } else if ((f1 > 0 && f2 < 0) || (f1 < 0 && f2 > 0)) {
+              const t = -f1 / (f2 - f1);
+              pts.push([
+                p1[0] + t * (p2[0] - p1[0]),
+                p1[1] + t * (p2[1] - p1[1]),
+                p1[2] + t * (p2[2] - p1[2]),
+              ]);
+            }
+          }
+
+          // Deduplicar vértices cercanos
+          const unique = [];
+          for (let i = 0; i < pts.length; i++) {
+            let duplicate = false;
+            for (let j = 0; j < unique.length; j++) {
+              if (norm(sub(pts[i], unique[j])) < 1e-5) {
+                duplicate = true;
+                break;
+              }
+            }
+            if (!duplicate) unique.push(pts[i]);
+          }
+
+          if (unique.length < 3) return null;
+
+          // Centroide y ordenamiento cíclico alrededor de la normal
+          let cx = 0,
+            cy = 0,
+            cz = 0;
+          for (let i = 0; i < unique.length; i++) {
+            cx += unique[i][0];
+            cy += unique[i][1];
+            cz += unique[i][2];
+          }
+          const centroid = [
+            cx / unique.length,
+            cy / unique.length,
+            cz / unique.length,
+          ];
+          const { u, v } = planeBasis([a, b, c]);
+
+          unique.sort((p, q) => {
+            const dp = sub(p, centroid);
+            const dq = sub(q, centroid);
+            const angP = Math.atan2(dot(dp, v), dot(dp, u));
+            const angQ = Math.atan2(dot(dq, v), dot(dq, u));
+            return angP - angQ;
+          });
+
+          return { polygon: unique, centroid, u, v };
+        }
+
+        // Recortar segmento infinito (P0 + t * dir) al cubo [-R, R]^3
+        function clipLineToBox(p0, dir) {
+          let tMin = -Infinity;
+          let tMax = Infinity;
+          for (let axis = 0; axis < 3; axis++) {
+            if (Math.abs(dir[axis]) < 1e-9) {
+              if (p0[axis] < -R - 1e-7 || p0[axis] > R + 1e-7) return null;
+            } else {
+              let t1 = (-R - p0[axis]) / dir[axis];
+              let t2 = (R - p0[axis]) / dir[axis];
+              if (t1 > t2) {
+                const tmp = t1;
+                t1 = t2;
+                t2 = tmp;
+              }
+              tMin = Math.max(tMin, t1);
+              tMax = Math.min(tMax, t2);
+              if (tMin > tMax) return null;
+            }
+          }
+          if (!Number.isFinite(tMin) || !Number.isFinite(tMax)) return null;
+          return [
+            add(p0, scaleVec(dir, tMin)),
+            add(p0, scaleVec(dir, tMax)),
+          ];
+        }
+
+        // Recortar segmento en el plano contra el polígono convexo (coordenadas 2D u,v)
+        function buildPlaneGridLines(planeData, spacing) {
+          const { polygon, centroid, u, v } = planeData;
+          const poly2D = polygon.map((p) => {
+            const rel = sub(p, centroid);
+            return [dot(rel, u), dot(rel, v)];
+          });
+
+          let minU = Infinity,
+            maxU = -Infinity,
+            minV = Infinity,
+            maxV = -Infinity;
+          for (let i = 0; i < poly2D.length; i++) {
+            minU = Math.min(minU, poly2D[i][0]);
+            maxU = Math.max(maxU, poly2D[i][0]);
+            minV = Math.min(minV, poly2D[i][1]);
+            maxV = Math.max(maxV, poly2D[i][1]);
+          }
+
+          function clip2DSegmentToPoly(p1, p2) {
+            let t0 = 0;
+            let t1 = 1;
+            const dx = p2[0] - p1[0];
+            const dy = p2[1] - p1[1];
+            const n = poly2D.length;
+
+            // Aristas CCW -> normal interior hacia la izquierda de (edge)
+            for (let i = 0; i < n; i++) {
+              const a = poly2D[i];
+              const b = poly2D[(i + 1) % n];
+              const ex = b[0] - a[0];
+              const ey = b[1] - a[1];
+              // Producto cruz 2D: (p - a) x edge <= 0 significa interior (CCW)
+              const nx = -ey;
+              const ny = ex;
+              const num = nx * (p1[0] - a[0]) + ny * (p1[1] - a[1]);
+              const den = -(nx * dx + ny * dy);
+              if (Math.abs(den) < 1e-10) {
+                if (num < -1e-7) return null;
+              } else {
+                const t = num / den;
+                if (den < 0) {
+                  t0 = Math.max(t0, t);
+                } else {
+                  t1 = Math.min(t1, t);
+                }
+                if (t0 > t1) return null;
+              }
+            }
+            if (t1 - t0 < 1e-5) return null;
+            const q1 = [p1[0] + t0 * dx, p1[1] + t0 * dy];
+            const q2 = [p1[0] + t1 * dx, p1[1] + t1 * dy];
+            return [
+              add(centroid, add(scaleVec(u, q1[0]), scaleVec(v, q1[1]))),
+              add(centroid, add(scaleVec(u, q2[0]), scaleVec(v, q2[1]))),
+            ];
+          }
+
+          const segments = [];
+          const startU = Math.ceil(minU / spacing) * spacing;
+          for (let uu = startU; uu <= maxU - 1e-5; uu += spacing) {
+            const seg = clip2DSegmentToPoly([uu, minV - 1], [uu, maxV + 1]);
+            if (seg) segments.push(seg);
+          }
+          const startV = Math.ceil(minV / spacing) * spacing;
+          for (let vv = startV; vv <= maxV - 1e-5; vv += spacing) {
+            const seg = clip2DSegmentToPoly([minU - 1, vv], [maxU + 1, vv]);
+            if (seg) segments.push(seg);
+          }
+          return segments;
+        }
+
+        // Recta intersección de dos planos: a1 x + b1 y + c1 z + d1 = 0 y a2 x + b2 y + c2 z + d2 = 0
+        function computePlanesIntersection(pA, pB) {
+          const n1 = [pA.a, pA.b, pA.c];
+          const n2 = [pB.a, pB.b, pB.c];
+          const dir = cross(n1, n2);
+          const dirLen = norm(dir);
+          if (dirLen < 1e-7 * norm(n1) * norm(n2)) return null;
+
+          // Punto particular resolviendo el par 2x2 de mayor determinante
+          const adx = Math.abs(dir[0]);
+          const ady = Math.abs(dir[1]);
+          const adz = Math.abs(dir[2]);
+          let p0 = [0, 0, 0];
+
+          if (adz >= adx && adz >= ady) {
+            // z = 0 -> resolver x, y
+            const det = pA.a * pB.b - pA.b * pB.a;
+            p0 = [
+              (pA.b * pB.d - pB.b * pA.d) / det,
+              (pB.a * pA.d - pA.a * pB.d) / det,
+              0,
+            ];
+          } else if (ady >= adx && ady >= adz) {
+            // y = 0 -> resolver x, z
+            const det = pA.a * pB.c - pA.c * pB.a;
+            p0 = [
+              (pA.c * pB.d - pB.c * pA.d) / det,
+              0,
+              (pB.a * pA.d - pA.a * pB.d) / det,
+            ];
+          } else {
+            // x = 0 -> resolver y, z
+            const det = pA.b * pB.c - pA.c * pB.b;
+            p0 = [
+              0,
+              (pA.c * pB.d - pB.c * pA.d) / det,
+              (pB.b * pA.d - pA.b * pB.d) / det,
+            ];
+          }
+
+          return clipLineToBox(p0, dir);
+        }
+
+        // Proyección 3D -> 2D (sistema mano derecha con z vertical)
+        function projectPoint(pt, yaw, pitch, cx, cy, scaleBase) {
+          const cosY = Math.cos(yaw);
+          const sinY = Math.sin(yaw);
+          const x1 = pt[0] * cosY - pt[1] * sinY;
+          const y1 = pt[0] * sinY + pt[1] * cosY;
+          const z1 = pt[2];
+
+          const cosP = Math.cos(pitch);
+          const sinP = Math.sin(pitch);
+
+          const camX = y1;
+          const camY = z1 * cosP - x1 * sinP;
+          const camZ = z1 * sinP + x1 * cosP;
+
+          const camDist = 22;
+          const persp = (scaleBase * state.zoom) / (camDist - camZ);
+          return {
+            x: cx + camX * persp,
+            y: cy - camY * persp,
+            depth: camZ,
+          };
+        }
+
+        function drawViewport(cx, cy, size, yawOffset, rotation2D) {
+          const isDark =
+            state.renderMode === "hologram" || state.renderMode === "pyramid";
+          const yaw = state.yaw + yawOffset;
+          const pitch = state.pitch;
+          const scaleBase = size * 1.45;
+
+          const colors = isDark
+            ? {
+                box: "rgba(148, 163, 184, 0.22)",
+                gridFloor: "rgba(148, 163, 184, 0.12)",
+                axisX: "#f87171",
+                axisY: "#4ade80",
+                axisZ: "#60a5fa",
+                planeALine: "#38bdf8",
+                planeAGrid: "rgba(56, 189, 248, 0.42)",
+                planeAFill: "rgba(56, 189, 248, 0.08)",
+                planeBLine: "#fb923c",
+                planeBGrid: "rgba(251, 146, 60, 0.42)",
+                planeBFill: "rgba(251, 146, 60, 0.08)",
+                intersect: "#c084fc",
+                text: "#f8fafc",
+              }
+            : {
+                box: "rgba(100, 116, 139, 0.28)",
+                gridFloor: "rgba(148, 163, 184, 0.22)",
+                axisX: "#b91c1c",
+                axisY: "#15803d",
+                axisZ: "#1d4ed8",
+                planeALine: "#0369a1",
+                planeAGrid: "rgba(3, 105, 161, 0.35)",
+                planeAFill: "rgba(3, 105, 161, 0.13)",
+                planeBLine: "#c2410c",
+                planeBGrid: "rgba(194, 65, 12, 0.35)",
+                planeBFill: "rgba(194, 65, 12, 0.13)",
+                intersect: "#6d28d9",
+                text: "#0f172a",
+              };
+
+          ctx.save();
+          if (rotation2D !== 0) {
+            ctx.translate(cx, cy);
+            ctx.rotate(rotation2D);
+            ctx.translate(-cx, -cy);
+          }
+
+          const proj = (pt) => projectPoint(pt, yaw, pitch, cx, cy, scaleBase);
+
+          function drawLine3D(p1, p2, color, width, dash) {
+            const a = proj(p1);
+            const b = proj(p2);
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            if (dash) ctx.setLineDash(dash);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          function drawArrow3D(p1, p2, color, width) {
+            const a = proj(p1);
+            const b = proj(p2);
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+
+            const angle = Math.atan2(b.y - a.y, b.x - a.x);
+            const headLen = 8;
+            ctx.beginPath();
+            ctx.moveTo(b.x, b.y);
+            ctx.lineTo(
+              b.x - headLen * Math.cos(angle - Math.PI / 6),
+              b.y - headLen * Math.sin(angle - Math.PI / 6)
+            );
+            ctx.lineTo(
+              b.x - headLen * Math.cos(angle + Math.PI / 6),
+              b.y - headLen * Math.sin(angle + Math.PI / 6)
+            );
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // 1. Grilla tenue en el plano z = 0 para referencia espacial
+          for (let k = -R; k <= R; k += 2.5) {
+            if (Math.abs(k) < 1e-6) continue;
+            drawLine3D([-R, k, 0], [R, k, 0], colors.gridFloor, 1);
+            drawLine3D([k, -R, 0], [k, R, 0], colors.gridFloor, 1);
+          }
+
+          // 2. Caja delimitadora 3D [-R, R]^3
+          for (let i = 0; i < CUBE_EDGES.length; i++) {
+            drawLine3D(
+              CUBE_VERTS[CUBE_EDGES[i][0]],
+              CUBE_VERTS[CUBE_EDGES[i][1]],
+              colors.box,
+              1,
+              [4, 4]
+            );
+          }
+
+          // 3. Ejes coordenados x, y, z
+          drawLine3D([-R, 0, 0], [0, 0, 0], colors.axisX, 1.3, [3, 3]);
+          drawArrow3D([0, 0, 0], [R + 0.4, 0, 0], colors.axisX, 2);
+
+          drawLine3D([0, -R, 0], [0, 0, 0], colors.axisY, 1.3, [3, 3]);
+          drawArrow3D([0, 0, 0], [0, R + 0.4, 0], colors.axisY, 2);
+
+          drawLine3D([0, 0, -R], [0, 0, 0], colors.axisZ, 1.3, [3, 3]);
+          drawArrow3D([0, 0, 0], [0, 0, R + 0.4], colors.axisZ, 2);
+
+          // Marcas en los ejes
+          for (let t = -4; t <= 4; t += 2) {
+            if (t === 0) continue;
+            drawLine3D([t, -0.14, 0], [t, 0.14, 0], colors.axisX, 1.2);
+            drawLine3D([-0.14, t, 0], [0.14, t, 0], colors.axisY, 1.2);
+            drawLine3D([-0.14, 0, t], [0.14, 0, t], colors.axisZ, 1.2);
+          }
+
+          // Etiquetas <x>, <y>, <z>
+          if (state.renderMode !== "pyramid") {
+            ctx.save();
+            ctx.font = "600 13px -apple-system, BlinkMacSystemFont, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            const px = proj([R + 0.85, 0, 0]);
+            const py = proj([0, R + 0.85, 0]);
+            const pz = proj([0, 0, R + 0.85]);
+            ctx.fillStyle = colors.axisX;
+            ctx.fillText("x", px.x, px.y);
+            ctx.fillStyle = colors.axisY;
+            ctx.fillText("y", py.x, py.y);
+            ctx.fillStyle = colors.axisZ;
+            ctx.fillText("z", pz.x, pz.y);
+            ctx.restore();
+          }
+
+          // 4. Planos ordenados por profundidad media
+          const renderItems = [];
+          if (state.planeA.valid && state.planeA.visible) {
+            const polyData = intersectPlaneWithBox(
+              state.planeA.a,
+              state.planeA.b,
+              state.planeA.c,
+              state.planeA.d
+            );
+            if (polyData) {
+              renderItems.push({
+                id: "A",
+                plane: state.planeA,
+                polyData,
+                depth: proj(polyData.centroid).depth,
+                lineColor: colors.planeALine,
+                gridColor: colors.planeAGrid,
+                fillColor: colors.planeAFill,
+              });
+            }
+          }
+          if (state.planeB.valid && state.planeB.visible) {
+            const polyData = intersectPlaneWithBox(
+              state.planeB.a,
+              state.planeB.b,
+              state.planeB.c,
+              state.planeB.d
+            );
+            if (polyData) {
+              renderItems.push({
+                id: "B",
+                plane: state.planeB,
+                polyData,
+                depth: proj(polyData.centroid).depth,
+                lineColor: colors.planeBLine,
+                gridColor: colors.planeBGrid,
+                fillColor: colors.planeBFill,
+              });
+            }
+          }
+
+          renderItems.sort((m, n) => m.depth - n.depth);
+
+          for (let i = 0; i < renderItems.length; i++) {
+            const item = renderItems[i];
+            const poly = item.polyData.polygon;
+
+            // Relleno sutil opcional
+            if (state.showFill && !isDark) {
+              ctx.save();
+              ctx.fillStyle = item.fillColor;
+              ctx.beginPath();
+              for (let k = 0; k < poly.length; k++) {
+                const p2 = proj(poly[k]);
+                if (k === 0) ctx.moveTo(p2.x, p2.y);
+                else ctx.lineTo(p2.x, p2.y);
+              }
+              ctx.closePath();
+              ctx.fill();
+              ctx.restore();
+            }
+
+            // Líneas de grilla internas del plano (gráfico de líneas)
+            const gridSegs = buildPlaneGridLines(item.polyData, 1.5);
+            for (let g = 0; g < gridSegs.length; g++) {
+              drawLine3D(
+                gridSegs[g][0],
+                gridSegs[g][1],
+                item.gridColor,
+                isDark ? 1.2 : 1.0
+              );
+            }
+
+            // Contorno del plano en el cubo
+            for (let k = 0; k < poly.length; k++) {
+              drawLine3D(
+                poly[k],
+                poly[(k + 1) % poly.length],
+                item.lineColor,
+                isDark ? 2.2 : 2.0
+              );
+            }
+
+            // Vector normal opcional
+            if (state.showNormals) {
+              const nUnit = normalize([item.plane.a, item.plane.b, item.plane.c]);
+              const tip = add(item.polyData.centroid, scaleVec(nUnit, 2.2));
+              drawArrow3D(item.polyData.centroid, tip, item.lineColor, 2.2);
+            }
+          }
+
+          // 5. Recta intersección A ∩ B
+          if (
+            state.planeA.valid &&
+            state.planeB.valid &&
+            state.planeA.visible &&
+            state.planeB.visible
+          ) {
+            const interSeg = computePlanesIntersection(state.planeA, state.planeB);
+            if (interSeg) {
+              drawLine3D(interSeg[0], interSeg[1], colors.intersect, 3.0);
+              const p1 = proj(interSeg[0]);
+              const p2 = proj(interSeg[1]);
+              ctx.save();
+              ctx.fillStyle = colors.intersect;
+              ctx.beginPath();
+              ctx.arc(p1.x, p1.y, 3.5, 0, Math.PI * 2);
+              ctx.arc(p2.x, p2.y, 3.5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+          }
+
+          ctx.restore();
+        }
+
+        function renderScene() {
+          const dpr = window.devicePixelRatio || 1;
+          const rect = canvasWrap.getBoundingClientRect();
+          const w = Math.max(200, Math.floor(rect.width));
+          const h = Math.max(200, Math.floor(rect.height));
+
+          if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+          }
+
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, w, h);
+
+          if (state.renderMode === "pyramid") {
+            const minDim = Math.min(w, h);
+            const offset = minDim * 0.28;
+            const subSize = minDim * 0.36;
+            const cx = w / 2;
+            const cy = h / 2;
+
+            // Cruz guía muy tenue en el centro para ubicar la pirámide 3D
+            ctx.save();
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(cx - minDim * 0.08, cy - minDim * 0.08, minDim * 0.16, minDim * 0.16);
+            ctx.restore();
+
+            // 4 caras para proyección holográfica en pirámide
+            drawViewport(cx, cy - offset, subSize, 0, Math.PI);
+            drawViewport(cx + offset, cy, subSize, Math.PI / 2, -Math.PI / 2);
+            drawViewport(cx, cy + offset, subSize, Math.PI, 0);
+            drawViewport(cx - offset, cy, subSize, -Math.PI / 2, Math.PI / 2);
+          } else {
+            drawViewport(w / 2, h / 2, Math.min(w, h) * 0.85, 0, 0);
+          }
+
+          // Aviso si algún plano válido queda fuera del volumen visible [-R, R]^3
+          const outsidePlanes = [];
+          if (
+            state.planeA.valid &&
+            state.planeA.visible &&
+            !intersectPlaneWithBox(
+              state.planeA.a,
+              state.planeA.b,
+              state.planeA.c,
+              state.planeA.d
+            )
+          ) {
+            outsidePlanes.push("Plano A");
+          }
+          if (
+            state.planeB.valid &&
+            state.planeB.visible &&
+            !intersectPlaneWithBox(
+              state.planeB.a,
+              state.planeB.b,
+              state.planeB.c,
+              state.planeB.d
+            )
+          ) {
+            outsidePlanes.push("Plano B");
+          }
+
+          if (outsidePlanes.length > 0) {
+            outOfBoundsNote.textContent =
+              outsidePlanes.join(" y ") +
+              " fuera de la caja visible [-" +
+              R +
+              ", " +
+              R +
+              "]³.";
+            outOfBoundsNote.classList.remove("hidden");
+          } else {
+            outOfBoundsNote.classList.add("hidden");
+          }
+        }
+
+        // Bucle de animación suave
+        let lastTime = performance.now();
+        function animate(now) {
+          const dt = Math.min(0.05, (now - lastTime) / 1000);
+          lastTime = now;
+          if (state.autoRotate && !state.dragging) {
+            state.yaw += dt * 0.32;
+            renderScene();
+          }
+          requestAnimationFrame(animate);
+        }
+
+        // Descarga del simulador como archivo HTML autocontenido
+        let downloadFeedbackTimer = null;
+        function downloadStandaloneSimulator() {
+          const clone = document.documentElement.cloneNode(true);
+
+          // Eliminar scripts externos o inyectados por el servidor de desarrollo
+          clone.querySelectorAll("script").forEach((el) => {
+            if (el.id !== "simulator-script") {
+              el.remove();
+            }
+          });
+
+          // Conservar los coeficientes ingresados por el usuario en el archivo descargado
+          const origInputs = document.querySelectorAll("#planes-form input");
+          const cloneInputs = clone.querySelectorAll("#planes-form input");
+          origInputs.forEach((origEl, idx) => {
+            const target = cloneInputs[idx];
+            if (!target) return;
+            if (origEl.type === "checkbox") {
+              if (origEl.checked) target.setAttribute("checked", "");
+              else target.removeAttribute("checked");
+            } else {
+              target.setAttribute("value", origEl.value);
+            }
+          });
+
+          // Normalizar clases visuales transitorias para que el archivo descargado inicie limpio
+          const cloneWrap = clone.querySelector("#canvas-wrap");
+          if (cloneWrap) cloneWrap.classList.remove("hologram-bg");
+
+          const cloneCanvas = clone.querySelector("#scene-canvas");
+          if (cloneCanvas) {
+            cloneCanvas.removeAttribute("width");
+            cloneCanvas.removeAttribute("height");
+          }
+
+          const cloneOutOfBounds = clone.querySelector("#out-of-bounds-note");
+          if (cloneOutOfBounds) {
+            cloneOutOfBounds.classList.add("hidden");
+            cloneOutOfBounds.textContent = "";
+          }
+
+          const cloneModePlanes = clone.querySelector("#mode-planes-btn");
+          const cloneModeLines = clone.querySelector("#mode-lines-btn");
+          const clonePlanesSec = clone.querySelector("#planes-section");
+          const cloneLinesSec = clone.querySelector("#lines-section");
+          if (cloneModePlanes && cloneModeLines && clonePlanesSec && cloneLinesSec) {
+            cloneModePlanes.classList.add("active");
+            cloneModePlanes.setAttribute("aria-selected", "true");
+            cloneModeLines.classList.remove("active");
+            cloneModeLines.setAttribute("aria-selected", "false");
+            clonePlanesSec.classList.remove("hidden");
+            cloneLinesSec.classList.add("hidden");
+          }
+
+          const cloneViewStd = clone.querySelector("#view-standard-btn");
+          const cloneViewHolo = clone.querySelector("#view-hologram-btn");
+          const cloneViewPyr = clone.querySelector("#view-pyramid-btn");
+          if (cloneViewStd && cloneViewHolo && cloneViewPyr) {
+            cloneViewStd.classList.add("is-active");
+            cloneViewHolo.classList.remove("is-active");
+            cloneViewPyr.classList.remove("is-active");
+          }
+
+          const cloneFillBtn = clone.querySelector("#fill-toggle-btn");
+          if (cloneFillBtn) cloneFillBtn.classList.add("is-active");
+
+          const cloneNormBtn = clone.querySelector("#normals-toggle-btn");
+          if (cloneNormBtn) cloneNormBtn.classList.remove("is-active");
+
+          const cloneDownloadBtn = clone.querySelector("#download-app-btn");
+          const cloneDownloadLabel = clone.querySelector("#download-app-label");
+          if (cloneDownloadBtn) cloneDownloadBtn.classList.remove("is-downloaded");
+          if (cloneDownloadLabel) cloneDownloadLabel.textContent = "Descargar simulador";
+
+          const htmlContent = "<!doctype html>\n" + clone.outerHTML;
+          const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "simulador-3d-planos-rectas.html";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          if (downloadAppBtn && downloadAppLabel) {
+            downloadAppBtn.classList.add("is-downloaded");
+            downloadAppLabel.textContent = "Descargado";
+            if (downloadFeedbackTimer) clearTimeout(downloadFeedbackTimer);
+            downloadFeedbackTimer = setTimeout(() => {
+              downloadAppBtn.classList.remove("is-downloaded");
+              downloadAppLabel.textContent = "Descargar simulador";
+            }, 2000);
+          }
+        }
+
+        if (downloadAppBtn) {
+          downloadAppBtn.addEventListener("click", downloadStandaloneSimulator);
+        }
+
+        window.addEventListener("resize", renderScene);
+
+        // Inicialización
+        updateAnimButton();
+        syncPlanesFromInputs();
+        requestAnimationFrame(animate);
+      })();
+    </script>
+  
+
+</body></html>
